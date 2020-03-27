@@ -38,7 +38,7 @@
 //! }
 //! ```
 #[prelude_import]
-use ::std::prelude::v1::*;
+use std::prelude::v1::*;
 #[macro_use]
 extern crate std;
 
@@ -48,14 +48,8 @@ extern crate libc;
 
 mod attriute {
 
-
-
-
-
-
-
-
     //! A wrapper to a attribute file in the `/sys/class/` directory.
+    use crate::{Ev3Error, Ev3Result};
     use std::cell::RefCell;
     use std::error::Error;
     use std::fs::{self, File, OpenOptions};
@@ -64,7 +58,6 @@ mod attriute {
     use std::os::unix::io::{AsRawFd, RawFd};
     use std::rc::Rc;
     use std::string::String;
-    use crate::{Ev3Error, Ev3Result};
     /// The root driver path `/sys/class/`.
     const ROOT_PATH: &str = "/sys/class/";
     /// A wrapper to a attribute file in the `/sys/class/` directory.
@@ -76,10 +69,11 @@ mod attriute {
     impl ::core::fmt::Debug for Attribute {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
             match *self {
-                Attribute { file: ref __self_0_0 } => {
+                Attribute {
+                    file: ref __self_0_0,
+                } => {
                     let mut debug_trait_builder = f.debug_struct("Attribute");
-                    let _ =
-                        debug_trait_builder.field("file", &&(*__self_0_0));
+                    let _ = debug_trait_builder.field("file", &&(*__self_0_0));
                     debug_trait_builder.finish()
                 }
             }
@@ -91,51 +85,43 @@ mod attriute {
         #[inline]
         fn clone(&self) -> Attribute {
             match *self {
-                Attribute { file: ref __self_0_0 } =>
-                Attribute{file: ::core::clone::Clone::clone(&(*__self_0_0)),},
+                Attribute {
+                    file: ref __self_0_0,
+                } => Attribute {
+                    file: ::core::clone::Clone::clone(&(*__self_0_0)),
+                },
             }
         }
     }
     impl Attribute {
         /// Create a new `Attribute` instance that wrappes
         /// the file `/sys/class/{class_name}/{name}{attribute_name}`.
-        pub fn new(class_name: &str, name: &str, attribute_name: &str)
-         -> Ev3Result<Attribute> {
-            let filename =
-                {
-                    let res =
-                        ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["",
-                                                                              "",
-                                                                              "/",
-                                                                              "/"],
-                                                                            &match (&ROOT_PATH,
-                                                                                    &class_name,
-                                                                                    &name,
-                                                                                    &attribute_name)
-                                                                                 {
-                                                                                 (arg0,
-                                                                                  arg1,
-                                                                                  arg2,
-                                                                                  arg3)
-                                                                                 =>
-                                                                                 [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                               ::core::fmt::Display::fmt),
-                                                                                  ::core::fmt::ArgumentV1::new(arg1,
-                                                                                                               ::core::fmt::Display::fmt),
-                                                                                  ::core::fmt::ArgumentV1::new(arg2,
-                                                                                                               ::core::fmt::Display::fmt),
-                                                                                  ::core::fmt::ArgumentV1::new(arg3,
-                                                                                                               ::core::fmt::Display::fmt)],
-                                                                             }));
-                    res
-                };
+        pub fn new(class_name: &str, name: &str, attribute_name: &str) -> Ev3Result<Attribute> {
+            let filename = {
+                let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                    &["", "", "/", "/"],
+                    &match (&ROOT_PATH, &class_name, &name, &attribute_name) {
+                        (arg0, arg1, arg2, arg3) => [
+                            ::core::fmt::ArgumentV1::new(arg0, ::core::fmt::Display::fmt),
+                            ::core::fmt::ArgumentV1::new(arg1, ::core::fmt::Display::fmt),
+                            ::core::fmt::ArgumentV1::new(arg2, ::core::fmt::Display::fmt),
+                            ::core::fmt::ArgumentV1::new(arg3, ::core::fmt::Display::fmt),
+                        ],
+                    },
+                ));
+                res
+            };
             let stat = fs::metadata(&filename)?;
             let mode = stat.permissions().mode();
             let readable = mode & 256 == 256;
             let writeable = mode & 128 == 128;
-            let file =
-                OpenOptions::new().read(readable).write(writeable).open(&filename)?;
-            Ok(Attribute{file: Rc::new(RefCell::new(file)),})
+            let file = OpenOptions::new()
+                .read(readable)
+                .write(writeable)
+                .open(&filename)?;
+            Ok(Attribute {
+                file: Rc::new(RefCell::new(file)),
+            })
         }
         /// Returns the current value of the wrapped file.
         fn get_str(&self) -> Ev3Result<String> {
@@ -156,32 +142,37 @@ mod attriute {
         /// Returns the current value of the wrapped file.
         /// The value is parsed to the type `T`.
         /// Returns a `Ev3Result::InternalError` if the current value is not parsable to type `T`.
-        pub fn get<T>(&self) -> Ev3Result<T> where T: std::str::FromStr,
-         <T as std::str::FromStr>::Err: Error {
+        pub fn get<T>(&self) -> Ev3Result<T>
+        where
+            T: std::str::FromStr,
+            <T as std::str::FromStr>::Err: Error,
+        {
             let value = self.get_str()?;
             match value.parse::<T>() {
                 Ok(value) => Ok(value),
-                Err(e) =>
-                Err(Ev3Error::InternalError{msg:
-                                                {
-                                                    let res =
-                                                        ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&[""],
-                                                                                                            &match (&e,)
-                                                                                                                 {
-                                                                                                                 (arg0,)
-                                                                                                                 =>
-                                                                                                                 [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                               ::core::fmt::Display::fmt)],
-                                                                                                             }));
-                                                    res
-                                                },}),
+                Err(e) => Err(Ev3Error::InternalError {
+                    msg: {
+                        let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                            &[""],
+                            &match (&e,) {
+                                (arg0,) => [::core::fmt::ArgumentV1::new(
+                                    arg0,
+                                    ::core::fmt::Display::fmt,
+                                )],
+                            },
+                        ));
+                        res
+                    },
+                }),
             }
         }
         /// Sets the value of the wrapped file.
         /// The value is parsed from the type `T`.
         /// Returns a `Ev3Result::InternalError` if the file is not writable.
-        pub fn set<T>(&self, value: T) -> Ev3Result<()> where
-         T: std::string::ToString {
+        pub fn set<T>(&self, value: T) -> Ev3Result<()>
+        where
+            T: std::string::ToString,
+        {
             self.set_str(&value.to_string())
         }
         #[inline]
@@ -195,25 +186,28 @@ mod attriute {
         /// The file value is splitet at whitespaces.
         pub fn get_vec(&self) -> Ev3Result<Vec<String>> {
             let value = self.get_str()?;
-            let vec =
-                value.split_whitespace().map(|word|
-                                                 word.to_owned()).collect();
+            let vec = value
+                .split_whitespace()
+                .map(|word| word.to_owned())
+                .collect();
             Ok(vec)
         }
         /// Returns a C pointer to the wrapped file.
-        pub fn get_raw_fd(&self) -> RawFd { self.file.borrow().as_raw_fd() }
+        pub fn get_raw_fd(&self) -> RawFd {
+            self.file.borrow().as_raw_fd()
+        }
     }
 }
 pub use attriute::Attribute;
 mod driver {
     //! Helper struct that manages attributes.
     //! It creates an `Attribute` instance if it does not exists or uses a cached one.
+    use crate::{utils::OrErr, Attribute, Ev3Error, Ev3Result, Port};
     use std::cell::RefCell;
     use std::collections::HashMap;
     use std::fmt::{self, Debug};
     use std::fs;
     use std::string::String;
-    use crate::{utils::OrErr, Attribute, Ev3Error, Ev3Result, Port};
     /// The root driver path `/sys/class/`.
     const ROOT_PATH: &str = "/sys/class/";
     /// Helper struct that manages attributes.
@@ -227,42 +221,39 @@ mod driver {
         /// Returns a new `Driver`.
         /// All attributes created by this driver will use the path `/sys/class/{class_name}/{name}`.
         pub fn new(class_name: &str, name: &str) -> Driver {
-            Driver{class_name: class_name.to_owned(),
-                   name: name.to_owned(),
-                   attributes: RefCell::new(HashMap::new()),}
+            Driver {
+                class_name: class_name.to_owned(),
+                name: name.to_owned(),
+                attributes: RefCell::new(HashMap::new()),
+            }
         }
         /// Returns the name of the device with the given `class_name`, `driver_name` and at the given `port`.
         ///
         /// Returns `Ev3Error::NotFound` if no such device exists.
-        pub fn find_name_by_port_and_driver(class_name: &str, port: &dyn Port,
-                                            driver_name: &str)
-         -> Ev3Result<String> {
+        pub fn find_name_by_port_and_driver(
+            class_name: &str,
+            port: &dyn Port,
+            driver_name: &str,
+        ) -> Ev3Result<String> {
             let port_address = port.address();
-            let paths =
-                fs::read_dir({
-                                 let res =
-                                     ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["",
-                                                                                           ""],
-                                                                                         &match (&ROOT_PATH,
-                                                                                                 &class_name)
-                                                                                              {
-                                                                                              (arg0,
-                                                                                               arg1)
-                                                                                              =>
-                                                                                              [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                            ::core::fmt::Display::fmt),
-                                                                                               ::core::fmt::ArgumentV1::new(arg1,
-                                                                                                                            ::core::fmt::Display::fmt)],
-                                                                                          }));
-                                 res
-                             })?;
+            let paths = fs::read_dir({
+                let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                    &["", ""],
+                    &match (&ROOT_PATH, &class_name) {
+                        (arg0, arg1) => [
+                            ::core::fmt::ArgumentV1::new(arg0, ::core::fmt::Display::fmt),
+                            ::core::fmt::ArgumentV1::new(arg1, ::core::fmt::Display::fmt),
+                        ],
+                    },
+                ));
+                res
+            })?;
             for path in paths {
                 let file_name = path?.file_name();
                 let name = file_name.to_str().or_err()?;
                 let address = Attribute::new(class_name, name, "address")?;
                 if address.get::<String>()?.contains(&port_address) {
-                    let driver =
-                        Attribute::new(class_name, name, "driver_name")?;
+                    let driver = Attribute::new(class_name, name, "driver_name")?;
                     if driver.get::<String>()? == driver_name {
                         return Ok(name.to_owned());
                     }
@@ -274,27 +265,20 @@ mod driver {
         ///
         /// Returns `Ev3Error::NotFound` if no such device exists.
         /// Returns `Ev3Error::MultipleMatches` if more then one matching device exists.
-        pub fn find_name_by_port(class_name: &str, port: &dyn Port)
-         -> Ev3Result<String> {
+        pub fn find_name_by_port(class_name: &str, port: &dyn Port) -> Ev3Result<String> {
             let port_address = port.address();
-            let paths =
-                fs::read_dir({
-                                 let res =
-                                     ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["",
-                                                                                           ""],
-                                                                                         &match (&ROOT_PATH,
-                                                                                                 &class_name)
-                                                                                              {
-                                                                                              (arg0,
-                                                                                               arg1)
-                                                                                              =>
-                                                                                              [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                            ::core::fmt::Display::fmt),
-                                                                                               ::core::fmt::ArgumentV1::new(arg1,
-                                                                                                                            ::core::fmt::Display::fmt)],
-                                                                                          }));
-                                 res
-                             })?;
+            let paths = fs::read_dir({
+                let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                    &["", ""],
+                    &match (&ROOT_PATH, &class_name) {
+                        (arg0, arg1) => [
+                            ::core::fmt::ArgumentV1::new(arg0, ::core::fmt::Display::fmt),
+                            ::core::fmt::ArgumentV1::new(arg1, ::core::fmt::Display::fmt),
+                        ],
+                    },
+                ));
+                res
+            })?;
             for path in paths {
                 let file_name = path?.file_name();
                 let name = file_name.to_str().or_err()?;
@@ -309,38 +293,30 @@ mod driver {
         ///
         /// Returns `Ev3Error::NotFound` if no such device exists.
         /// Returns `Ev3Error::MultipleMatches` if more then one matching device exists.
-        pub fn find_name_by_driver(class_name: &str, driver_name: &str)
-         -> Ev3Result<String> {
-            let mut names =
-                Driver::find_names_by_driver(class_name, driver_name)?;
+        pub fn find_name_by_driver(class_name: &str, driver_name: &str) -> Ev3Result<String> {
+            let mut names = Driver::find_names_by_driver(class_name, driver_name)?;
             match names.len() {
                 0 => Err(Ev3Error::NotFound),
-                1 =>
-                Ok(names.pop().expect("Name vector contains exactly one element")),
+                1 => Ok(names
+                    .pop()
+                    .expect("Name vector contains exactly one element")),
                 _ => Err(Ev3Error::MultipleMatches),
             }
         }
         /// Returns the names of the devices with the given `class_name`.
-        pub fn find_names_by_driver(class_name: &str, driver_name: &str)
-         -> Ev3Result<Vec<String>> {
-            let paths =
-                fs::read_dir({
-                                 let res =
-                                     ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["",
-                                                                                           ""],
-                                                                                         &match (&ROOT_PATH,
-                                                                                                 &class_name)
-                                                                                              {
-                                                                                              (arg0,
-                                                                                               arg1)
-                                                                                              =>
-                                                                                              [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                            ::core::fmt::Display::fmt),
-                                                                                               ::core::fmt::ArgumentV1::new(arg1,
-                                                                                                                            ::core::fmt::Display::fmt)],
-                                                                                          }));
-                                 res
-                             })?;
+        pub fn find_names_by_driver(class_name: &str, driver_name: &str) -> Ev3Result<Vec<String>> {
+            let paths = fs::read_dir({
+                let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                    &["", ""],
+                    &match (&ROOT_PATH, &class_name) {
+                        (arg0, arg1) => [
+                            ::core::fmt::ArgumentV1::new(arg0, ::core::fmt::Display::fmt),
+                            ::core::fmt::ArgumentV1::new(arg1, ::core::fmt::Display::fmt),
+                        ],
+                    },
+                ));
+                res
+            })?;
             let mut found_names = Vec::new();
             for path in paths {
                 let file_name = path?.file_name();
@@ -358,33 +334,37 @@ mod driver {
             let mut attributes = self.attributes.borrow_mut();
             if !attributes.contains_key(attribute_name) {
                 if let Ok(v) =
-                       Attribute::new(self.class_name.as_ref(),
-                                      self.name.as_ref(), attribute_name) {
+                    Attribute::new(self.class_name.as_ref(), self.name.as_ref(), attribute_name)
+                {
                     attributes.insert(attribute_name.to_owned(), v);
                 };
             };
-            attributes.get(attribute_name).expect("Internal error in the attribute map").clone()
+            attributes
+                .get(attribute_name)
+                .expect("Internal error in the attribute map")
+                .clone()
         }
     }
     impl Clone for Driver {
         fn clone(&self) -> Self {
-            Driver{class_name: self.class_name.clone(),
-                   name: self.name.clone(),
-                   attributes: RefCell::new(HashMap::new()),}
+            Driver {
+                class_name: self.class_name.clone(),
+                name: self.name.clone(),
+                attributes: RefCell::new(HashMap::new()),
+            }
         }
     }
     impl Debug for Driver {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.write_fmt(::core::fmt::Arguments::new_v1(&["Driver { class_name: ",
-                                                         ", name: ", " }"],
-                                                       &match (&self.class_name,
-                                                               &self.name) {
-                                                            (arg0, arg1) =>
-                                                            [::core::fmt::ArgumentV1::new(arg0,
-                                                                                          ::core::fmt::Display::fmt),
-                                                             ::core::fmt::ArgumentV1::new(arg1,
-                                                                                          ::core::fmt::Display::fmt)],
-                                                        }))
+            f.write_fmt(::core::fmt::Arguments::new_v1(
+                &["Driver { class_name: ", ", name: ", " }"],
+                &match (&self.class_name, &self.name) {
+                    (arg0, arg1) => [
+                        ::core::fmt::ArgumentV1::new(arg0, ::core::fmt::Display::fmt),
+                        ::core::fmt::ArgumentV1::new(arg1, ::core::fmt::Display::fmt),
+                    ],
+                },
+            ))
         }
     }
 }
@@ -394,8 +374,7 @@ mod device {
     /// The ev3dev device base trait
     pub trait Device {
         /// Returns the attribute wrapper for an attribute name.
-        fn get_attribute(&self, name: &str)
-        -> Attribute;
+        fn get_attribute(&self, name: &str) -> Attribute;
         /// Returns the name of the port that the motor is connected to.
         fn get_address(&self) -> Ev3Result<String> {
             self.get_attribute("address").get()
@@ -433,17 +412,18 @@ mod findable {
     /// pub struct LargeMotor {
     ///     driver: Driver,
     /// }
-    pub trait Findable<PortType> where Self: std::marker::Sized, Self: Device,
-     PortType: Port {
+    pub trait Findable<PortType>
+    where
+        Self: std::marker::Sized,
+        Self: Device,
+        PortType: Port,
+    {
         /// Extract list of connected 'Self'
-        fn list()
-        -> Ev3Result<Vec<Self>>;
+        fn list() -> Ev3Result<Vec<Self>>;
         /// Try to get a `Self` on the given port. Returns `None` if port is not used or another device is connected.
-        fn get(port: PortType)
-        -> Ev3Result<Self>;
+        fn get(port: PortType) -> Ev3Result<Self>;
         /// Try to find a `Self`. Only returns a motor if their is exactly one connected, `Error::NotFound` otherwise.
-        fn find()
-        -> Ev3Result<Self>;
+        fn find() -> Ev3Result<Self>;
     }
 }
 pub use findable::Findable;
@@ -453,7 +433,6 @@ mod utils {
     pub type Ev3Result<T> = Result<T, Ev3Error>;
     /// Custom error type for internal errors.
     pub enum Ev3Error {
-
         /// Internal error with error `msg`.
         InternalError {
             /// Original error message.
@@ -472,8 +451,7 @@ mod utils {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
             match (&*self,) {
                 (&Ev3Error::InternalError { msg: ref __self_0 },) => {
-                    let mut debug_trait_builder =
-                        f.debug_struct("InternalError");
+                    let mut debug_trait_builder = f.debug_struct("InternalError");
                     let _ = debug_trait_builder.field("msg", &&(*__self_0));
                     debug_trait_builder.finish()
                 }
@@ -482,8 +460,7 @@ mod utils {
                     debug_trait_builder.finish()
                 }
                 (&Ev3Error::MultipleMatches,) => {
-                    let mut debug_trait_builder =
-                        f.debug_tuple("MultipleMatches");
+                    let mut debug_trait_builder = f.debug_tuple("MultipleMatches");
                     debug_trait_builder.finish()
                 }
             }
@@ -491,72 +468,74 @@ mod utils {
     }
     impl From<std::io::Error> for Ev3Error {
         fn from(err: std::io::Error) -> Self {
-            Ev3Error::InternalError{msg:
-                                        {
-                                            let res =
-                                                ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&[""],
-                                                                                                    &match (&err,)
-                                                                                                         {
-                                                                                                         (arg0,)
-                                                                                                         =>
-                                                                                                         [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                       ::core::fmt::Display::fmt)],
-                                                                                                     }));
-                                            res
-                                        },}
+            Ev3Error::InternalError {
+                msg: {
+                    let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                        &[""],
+                        &match (&err,) {
+                            (arg0,) => [::core::fmt::ArgumentV1::new(
+                                arg0,
+                                ::core::fmt::Display::fmt,
+                            )],
+                        },
+                    ));
+                    res
+                },
+            }
         }
     }
     impl From<std::string::FromUtf8Error> for Ev3Error {
         fn from(err: std::string::FromUtf8Error) -> Self {
-            Ev3Error::InternalError{msg:
-                                        {
-                                            let res =
-                                                ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&[""],
-                                                                                                    &match (&err,)
-                                                                                                         {
-                                                                                                         (arg0,)
-                                                                                                         =>
-                                                                                                         [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                       ::core::fmt::Display::fmt)],
-                                                                                                     }));
-                                            res
-                                        },}
+            Ev3Error::InternalError {
+                msg: {
+                    let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                        &[""],
+                        &match (&err,) {
+                            (arg0,) => [::core::fmt::ArgumentV1::new(
+                                arg0,
+                                ::core::fmt::Display::fmt,
+                            )],
+                        },
+                    ));
+                    res
+                },
+            }
         }
     }
     impl From<std::num::ParseIntError> for Ev3Error {
         fn from(err: std::num::ParseIntError) -> Self {
-            Ev3Error::InternalError{msg:
-                                        {
-                                            let res =
-                                                ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&[""],
-                                                                                                    &match (&err,)
-                                                                                                         {
-                                                                                                         (arg0,)
-                                                                                                         =>
-                                                                                                         [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                       ::core::fmt::Display::fmt)],
-                                                                                                     }));
-                                            res
-                                        },}
+            Ev3Error::InternalError {
+                msg: {
+                    let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                        &[""],
+                        &match (&err,) {
+                            (arg0,) => [::core::fmt::ArgumentV1::new(
+                                arg0,
+                                ::core::fmt::Display::fmt,
+                            )],
+                        },
+                    ));
+                    res
+                },
+            }
         }
     }
     /// EV3 ports
     pub trait Port {
         /// Returns the name of the port.
-        fn address(&self)
-        -> String;
+        fn address(&self) -> String;
     }
     /// Helper trait to convert an option to an error.
     /// Polyfill for the `Try` trait until it is stable.
     pub trait OrErr<T> {
         /// Consumes the `Option<T>` and returns an `Ev3Result<T>`.
-        fn or_err(self)
-        -> Ev3Result<T>;
+        fn or_err(self) -> Ev3Result<T>;
     }
-    impl <T> OrErr<T> for Option<T> {
+    impl<T> OrErr<T> for Option<T> {
         fn or_err(self) -> Ev3Result<T> {
-            self.ok_or(Ev3Error::InternalError{msg:
-                                                   "Cannot unwrap option".to_owned(),})
+            self.ok_or(Ev3Error::InternalError {
+                msg: "Cannot unwrap option".to_owned(),
+            })
         }
     }
 }
@@ -595,35 +574,43 @@ pub mod wait {
     /// }
     /// ```
     pub fn wait<F>(fd: RawFd, cond: F, timeout: Option<Duration>) -> bool
-     where F: Fn() -> bool {
-        if cond() { return true; }
+    where
+        F: Fn() -> bool,
+    {
+        if cond() {
+            return true;
+        }
         let start = Instant::now();
         let mut t = timeout;
-        loop  {
-            let wait_timeout =
-                match t {
-                    Some(duration) => duration.as_millis() as i32,
-                    None => -1,
-                };
+        loop {
+            let wait_timeout = match t {
+                Some(duration) => duration.as_millis() as i32,
+                None => -1,
+            };
             wait_file_changes(fd, wait_timeout);
             if let Some(duration) = timeout {
                 let elapsed = start.elapsed();
-                if elapsed >= duration { return false; }
+                if elapsed >= duration {
+                    return false;
+                }
                 t = Some(duration - elapsed);
             }
-            if cond() { return true; }
+            if cond() {
+                return true;
+            }
         }
     }
     /// Wrapper for `libc::epoll_wait`
     fn wait_file_changes(fd: RawFd, timeout: i32) -> bool {
-        let mut buf: [libc::epoll_event; 10] =
-            [libc::epoll_event{events: 0, u64: 0,}; 10];
-        let result =
-            unsafe {
-                libc::epoll_wait(fd,
-                                 buf.as_mut_ptr() as *mut libc::epoll_event,
-                                 buf.len() as i32, timeout) as i32
-            };
+        let mut buf: [libc::epoll_event; 10] = [libc::epoll_event { events: 0, u64: 0 }; 10];
+        let result = unsafe {
+            libc::epoll_wait(
+                fd,
+                buf.as_mut_ptr() as *mut libc::epoll_event,
+                buf.len() as i32,
+                timeout,
+            ) as i32
+        };
         result > 0
     }
 }
@@ -762,16 +749,16 @@ pub mod motors {
                 self.set_command(COMMAND_RUN_TIMED)
             }
             /// Stop any of the run commands before they are complete using the command specified by `stop_action`.
-            fn stop(&self) -> Ev3Result<()> { self.set_command(COMMAND_STOP) }
+            fn stop(&self) -> Ev3Result<()> {
+                self.set_command(COMMAND_STOP)
+            }
             /// Power is being sent to the motor.
             fn is_running(&self) -> Ev3Result<bool> {
-                Ok(self.get_state()?.iter().any(|state|
-                                                    state == STATE_RUNNING))
+                Ok(self.get_state()?.iter().any(|state| state == STATE_RUNNING))
             }
             /// The motor is ramping up or down and has not yet reached a pub constant output level.
             fn is_ramping(&self) -> Ev3Result<bool> {
-                Ok(self.get_state()?.iter().any(|state|
-                                                    state == STATE_RAMPING))
+                Ok(self.get_state()?.iter().any(|state| state == STATE_RAMPING))
             }
         }
     }
@@ -788,15 +775,13 @@ pub mod motors {
         #[automatically_derived]
         #[allow(unused_qualifications)]
         impl ::core::fmt::Debug for LargeMotor {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter)
-             -> ::core::fmt::Result {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match *self {
-                    LargeMotor { driver: ref __self_0_0 } => {
-                        let mut debug_trait_builder =
-                            f.debug_struct("LargeMotor");
-                        let _ =
-                            debug_trait_builder.field("driver",
-                                                      &&(*__self_0_0));
+                    LargeMotor {
+                        driver: ref __self_0_0,
+                    } => {
+                        let mut debug_trait_builder = f.debug_struct("LargeMotor");
+                        let _ = debug_trait_builder.field("driver", &&(*__self_0_0));
                         debug_trait_builder.finish()
                     }
                 }
@@ -808,9 +793,11 @@ pub mod motors {
             #[inline]
             fn clone(&self) -> LargeMotor {
                 match *self {
-                    LargeMotor { driver: ref __self_0_0 } =>
-                    LargeMotor{driver:
-                                   ::core::clone::Clone::clone(&(*__self_0_0)),},
+                    LargeMotor {
+                        driver: ref __self_0_0,
+                    } => LargeMotor {
+                        driver: ::core::clone::Clone::clone(&(*__self_0_0)),
+                    },
                 }
             }
         }
@@ -822,26 +809,30 @@ pub mod motors {
         impl Findable<crate::motors::MotorPort> for LargeMotor {
             fn get(port: crate::motors::MotorPort) -> Ev3Result<Self> {
                 let name =
-                    Driver::find_name_by_port_and_driver("tacho-motor", &port,
-                                                         "lego-ev3-l-motor")?;
-                Ok(LargeMotor{driver: Driver::new("tacho-motor", &name),})
+                    Driver::find_name_by_port_and_driver("tacho-motor", &port, "lego-ev3-l-motor")?;
+                Ok(LargeMotor {
+                    driver: Driver::new("tacho-motor", &name),
+                })
             }
             fn find() -> Ev3Result<Self> {
-                let name =
-                    Driver::find_name_by_driver("tacho-motor",
-                                                "lego-ev3-l-motor")?;
-                Ok(LargeMotor{driver: Driver::new("tacho-motor", &name),})
+                let name = Driver::find_name_by_driver("tacho-motor", "lego-ev3-l-motor")?;
+                Ok(LargeMotor {
+                    driver: Driver::new("tacho-motor", &name),
+                })
             }
             fn list() -> Ev3Result<Vec<Self>> {
-                Ok(Driver::find_names_by_driver("tacho-motor",
-                                                "lego-ev3-l-motor")?.iter().map(|name|
-                                                                                    LargeMotor{driver:
-                                                                                                   Driver::new("tacho-motor",
-                                                                                                               name),}).collect())
+                Ok(
+                    Driver::find_names_by_driver("tacho-motor", "lego-ev3-l-motor")?
+                        .iter()
+                        .map(|name| LargeMotor {
+                            driver: Driver::new("tacho-motor", name),
+                        })
+                        .collect(),
+                )
             }
         }
-        impl Motor for LargeMotor { }
-        impl TachoMotor for LargeMotor { }
+        impl Motor for LargeMotor {}
+        impl TachoMotor for LargeMotor {}
     }
     mod medium_motor {
         use super::{Motor, TachoMotor};
@@ -856,15 +847,13 @@ pub mod motors {
         #[automatically_derived]
         #[allow(unused_qualifications)]
         impl ::core::fmt::Debug for MediumMotor {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter)
-             -> ::core::fmt::Result {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match *self {
-                    MediumMotor { driver: ref __self_0_0 } => {
-                        let mut debug_trait_builder =
-                            f.debug_struct("MediumMotor");
-                        let _ =
-                            debug_trait_builder.field("driver",
-                                                      &&(*__self_0_0));
+                    MediumMotor {
+                        driver: ref __self_0_0,
+                    } => {
+                        let mut debug_trait_builder = f.debug_struct("MediumMotor");
+                        let _ = debug_trait_builder.field("driver", &&(*__self_0_0));
                         debug_trait_builder.finish()
                     }
                 }
@@ -876,9 +865,11 @@ pub mod motors {
             #[inline]
             fn clone(&self) -> MediumMotor {
                 match *self {
-                    MediumMotor { driver: ref __self_0_0 } =>
-                    MediumMotor{driver:
-                                    ::core::clone::Clone::clone(&(*__self_0_0)),},
+                    MediumMotor {
+                        driver: ref __self_0_0,
+                    } => MediumMotor {
+                        driver: ::core::clone::Clone::clone(&(*__self_0_0)),
+                    },
                 }
             }
         }
@@ -890,26 +881,30 @@ pub mod motors {
         impl Findable<crate::motors::MotorPort> for MediumMotor {
             fn get(port: crate::motors::MotorPort) -> Ev3Result<Self> {
                 let name =
-                    Driver::find_name_by_port_and_driver("tacho-motor", &port,
-                                                         "lego-ev3-m-motor")?;
-                Ok(MediumMotor{driver: Driver::new("tacho-motor", &name),})
+                    Driver::find_name_by_port_and_driver("tacho-motor", &port, "lego-ev3-m-motor")?;
+                Ok(MediumMotor {
+                    driver: Driver::new("tacho-motor", &name),
+                })
             }
             fn find() -> Ev3Result<Self> {
-                let name =
-                    Driver::find_name_by_driver("tacho-motor",
-                                                "lego-ev3-m-motor")?;
-                Ok(MediumMotor{driver: Driver::new("tacho-motor", &name),})
+                let name = Driver::find_name_by_driver("tacho-motor", "lego-ev3-m-motor")?;
+                Ok(MediumMotor {
+                    driver: Driver::new("tacho-motor", &name),
+                })
             }
             fn list() -> Ev3Result<Vec<Self>> {
-                Ok(Driver::find_names_by_driver("tacho-motor",
-                                                "lego-ev3-m-motor")?.iter().map(|name|
-                                                                                    MediumMotor{driver:
-                                                                                                    Driver::new("tacho-motor",
-                                                                                                                name),}).collect())
+                Ok(
+                    Driver::find_names_by_driver("tacho-motor", "lego-ev3-m-motor")?
+                        .iter()
+                        .map(|name| MediumMotor {
+                            driver: Driver::new("tacho-motor", name),
+                        })
+                        .collect(),
+                )
             }
         }
-        impl Motor for MediumMotor { }
-        impl TachoMotor for MediumMotor { }
+        impl Motor for MediumMotor {}
+        impl TachoMotor for MediumMotor {}
     }
     pub mod servo_motor {
         //! The ServoMotor trait provides a uniform interface for using hobby type servo motors.
@@ -1040,11 +1035,12 @@ pub mod motors {
             }
             /// Power is being sent to the motor.
             fn is_running(&self) -> Ev3Result<bool> {
-                Ok(self.get_state()?.iter().any(|state|
-                                                    state == STATE_RUNNING))
+                Ok(self.get_state()?.iter().any(|state| state == STATE_RUNNING))
             }
             /// Drive servo to the position set in the `position_sp` attribute.
-            fn run(&self) -> Ev3Result<()> { self.set_command(COMMAND_RUN) }
+            fn run(&self) -> Ev3Result<()> {
+                self.set_command(COMMAND_RUN)
+            }
             /// Remove power from the motor.
             fn float(&self) -> Ev3Result<()> {
                 self.set_command(COMMAND_FLOAT)
@@ -1515,18 +1511,20 @@ pub mod motors {
             /// Runs the motor to an absolute position specified by `position_sp`
             ///
             /// and then stops the motor using the command specified in `stop_action`.
-            fn run_to_abs_pos(&self, position_sp: Option<i32>)
-             -> Ev3Result<()> {
-                if let Some(p) = position_sp { self.set_position_sp(p)?; }
+            fn run_to_abs_pos(&self, position_sp: Option<i32>) -> Ev3Result<()> {
+                if let Some(p) = position_sp {
+                    self.set_position_sp(p)?;
+                }
                 self.set_command(COMMAND_RUN_TO_ABS_POS)
             }
             /// Runs the motor to a position relative to the current position value.
             ///
             /// The new position will be current `position` + `position_sp`.
             /// When the new position is reached, the motor will stop using the command specified by `stop_action`.
-            fn run_to_rel_pos(&self, position_sp: Option<i32>)
-             -> Ev3Result<()> {
-                if let Some(p) = position_sp { self.set_position_sp(p)?; }
+            fn run_to_rel_pos(&self, position_sp: Option<i32>) -> Ev3Result<()> {
+                if let Some(p) = position_sp {
+                    self.set_position_sp(p)?;
+                }
                 self.set_command(COMMAND_RUN_TO_REL_POS)
             }
             /// Run the motor for the amount of time specified in `time_sp`
@@ -1540,7 +1538,9 @@ pub mod motors {
                 self.set_command(COMMAND_RUN_TIMED)
             }
             /// Stop any of the run commands before they are complete using the command specified by `stop_action`.
-            fn stop(&self) -> Ev3Result<()> { self.set_command(COMMAND_STOP) }
+            fn stop(&self) -> Ev3Result<()> {
+                self.set_command(COMMAND_STOP)
+            }
             /// Resets all of the motor parameter attributes to their default values.
             /// This will also have the effect of stopping the motor.
             fn reset(&self) -> Ev3Result<()> {
@@ -1548,29 +1548,26 @@ pub mod motors {
             }
             /// Power is being sent to the motor.
             fn is_running(&self) -> Ev3Result<bool> {
-                Ok(self.get_state()?.iter().any(|state|
-                                                    state == STATE_RUNNING))
+                Ok(self.get_state()?.iter().any(|state| state == STATE_RUNNING))
             }
             /// The motor is ramping up or down and has not yet reached a pub constant output level.
             fn is_ramping(&self) -> Ev3Result<bool> {
-                Ok(self.get_state()?.iter().any(|state|
-                                                    state == STATE_RAMPING))
+                Ok(self.get_state()?.iter().any(|state| state == STATE_RAMPING))
             }
             /// The motor is not turning, but rather attempting to hold a fixed position.
             fn is_holding(&self) -> Ev3Result<bool> {
-                Ok(self.get_state()?.iter().any(|state|
-                                                    state == STATE_HOLDING))
+                Ok(self.get_state()?.iter().any(|state| state == STATE_HOLDING))
             }
             /// The motor is turning as fast as possible, but cannot reach its `speed_sp`.
             fn is_overloaded(&self) -> Ev3Result<bool> {
-                Ok(self.get_state()?.iter().any(|state|
-                                                    state ==
-                                                        STATE_OVERLOADED))
+                Ok(self
+                    .get_state()?
+                    .iter()
+                    .any(|state| state == STATE_OVERLOADED))
             }
             /// The motor is trying to run but is not turning at all.
             fn is_stalled(&self) -> Ev3Result<bool> {
-                Ok(self.get_state()?.iter().any(|state|
-                                                    state == STATE_STALLED))
+                Ok(self.get_state()?.iter().any(|state| state == STATE_STALLED))
             }
             /// Wait until condition `cond` returns true or the `timeout` is reached.
             ///
@@ -1604,7 +1601,9 @@ pub mod motors {
             /// # }
             /// ```
             fn wait<F>(&self, cond: F, timeout: Option<Duration>) -> bool
-             where F: Fn() -> bool {
+            where
+                F: Fn() -> bool,
+            {
                 let fd = self.get_attribute("state").get_raw_fd();
                 wait::wait(fd, cond, timeout)
             }
@@ -1632,18 +1631,13 @@ pub mod motors {
             /// # Ok(())
             /// # }
             /// ```
-            fn wait_while(&self, state: &str, timeout: Option<Duration>)
-             -> bool {
-                let cond =
-                    ||
-                        {
-                            self.get_state().unwrap_or_else(|_|
-                                                                <[_]>::into_vec(box
-                                                                                    [])).iter().all(|s|
-                                                                                                        s
-                                                                                                            !=
-                                                                                                            state)
-                        };
+            fn wait_while(&self, state: &str, timeout: Option<Duration>) -> bool {
+                let cond = || {
+                    self.get_state()
+                        .unwrap_or_else(|_| <[_]>::into_vec(box []))
+                        .iter()
+                        .all(|s| s != state)
+                };
                 self.wait(cond, timeout)
             }
             /// Wait until the `state` is in the vector `self.get_state()` or the `timeout` is reached.
@@ -1670,18 +1664,13 @@ pub mod motors {
             /// # Ok(())
             /// # }
             /// ```
-            fn wait_until(&self, state: &str, timeout: Option<Duration>)
-             -> bool {
-                let cond =
-                    ||
-                        {
-                            self.get_state().unwrap_or_else(|_|
-                                                                <[_]>::into_vec(box
-                                                                                    [])).iter().any(|s|
-                                                                                                        s
-                                                                                                            ==
-                                                                                                            state)
-                        };
+            fn wait_until(&self, state: &str, timeout: Option<Duration>) -> bool {
+                let cond = || {
+                    self.get_state()
+                        .unwrap_or_else(|_| <[_]>::into_vec(box []))
+                        .iter()
+                        .any(|s| s == state)
+                };
                 self.wait(cond, timeout)
             }
             /// Wait until the motor is not moving or the timeout is reached.
@@ -1708,23 +1697,21 @@ pub mod motors {
             /// # Ok(())
             /// # }
             /// ```
-            fn wait_until_not_moving(&self, timeout: Option<Duration>)
-             -> bool {
+            fn wait_until_not_moving(&self, timeout: Option<Duration>) -> bool {
                 self.wait_while(STATE_RUNNING, timeout)
             }
         }
     }
     pub use self::dc_motor::DcMotor;
-    pub use self::servo_motor::ServoMotor;
-    pub use self::tacho_motor::TachoMotor;
     pub use self::large_motor::LargeMotor;
     pub use self::medium_motor::MediumMotor;
+    pub use self::servo_motor::ServoMotor;
+    pub use self::tacho_motor::TachoMotor;
     use crate::{Device, Port};
     /// Container trait to indicate something is a motor
-    pub trait Motor: Device { }
+    pub trait Motor: Device {}
     /// EV3 ports `outA` to `outD`
     pub enum MotorPort {
-
         /// EV3 `outA` port
         OutA,
 
@@ -1763,12 +1750,16 @@ pub mod motors {
     }
     #[automatically_derived]
     #[allow(unused_qualifications)]
-    impl ::core::marker::Copy for MotorPort { }
+    impl ::core::marker::Copy for MotorPort {}
     #[automatically_derived]
     #[allow(unused_qualifications)]
     impl ::core::clone::Clone for MotorPort {
         #[inline]
-        fn clone(&self) -> MotorPort { { *self } }
+        fn clone(&self) -> MotorPort {
+            {
+                *self
+            }
+        }
     }
     impl Port for MotorPort {
         fn address(&self) -> String {
@@ -1809,15 +1800,13 @@ pub mod sensors {
         #[automatically_derived]
         #[allow(unused_qualifications)]
         impl ::core::fmt::Debug for ColorSensor {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter)
-             -> ::core::fmt::Result {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match *self {
-                    ColorSensor { driver: ref __self_0_0 } => {
-                        let mut debug_trait_builder =
-                            f.debug_struct("ColorSensor");
-                        let _ =
-                            debug_trait_builder.field("driver",
-                                                      &&(*__self_0_0));
+                    ColorSensor {
+                        driver: ref __self_0_0,
+                    } => {
+                        let mut debug_trait_builder = f.debug_struct("ColorSensor");
+                        let _ = debug_trait_builder.field("driver", &&(*__self_0_0));
                         debug_trait_builder.finish()
                     }
                 }
@@ -1829,9 +1818,11 @@ pub mod sensors {
             #[inline]
             fn clone(&self) -> ColorSensor {
                 match *self {
-                    ColorSensor { driver: ref __self_0_0 } =>
-                    ColorSensor{driver:
-                                    ::core::clone::Clone::clone(&(*__self_0_0)),},
+                    ColorSensor {
+                        driver: ref __self_0_0,
+                    } => ColorSensor {
+                        driver: ::core::clone::Clone::clone(&(*__self_0_0)),
+                    },
                 }
             }
         }
@@ -1840,26 +1831,30 @@ pub mod sensors {
                 self.driver.get_attribute(name)
             }
         }
-        impl Sensor for ColorSensor { }
+        impl Sensor for ColorSensor {}
         impl Findable<crate::sensors::SensorPort> for ColorSensor {
             fn get(port: crate::sensors::SensorPort) -> Ev3Result<Self> {
                 let name =
-                    Driver::find_name_by_port_and_driver("lego-sensor", &port,
-                                                         "lego-ev3-color")?;
-                Ok(ColorSensor{driver: Driver::new("lego-sensor", &name),})
+                    Driver::find_name_by_port_and_driver("lego-sensor", &port, "lego-ev3-color")?;
+                Ok(ColorSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn find() -> Ev3Result<Self> {
-                let name =
-                    Driver::find_name_by_driver("lego-sensor",
-                                                "lego-ev3-color")?;
-                Ok(ColorSensor{driver: Driver::new("lego-sensor", &name),})
+                let name = Driver::find_name_by_driver("lego-sensor", "lego-ev3-color")?;
+                Ok(ColorSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn list() -> Ev3Result<Vec<Self>> {
-                Ok(Driver::find_names_by_driver("lego-sensor",
-                                                "lego-ev3-color")?.iter().map(|name|
-                                                                                  ColorSensor{driver:
-                                                                                                  Driver::new("lego-sensor",
-                                                                                                              name),}).collect())
+                Ok(
+                    Driver::find_names_by_driver("lego-sensor", "lego-ev3-color")?
+                        .iter()
+                        .map(|name| ColorSensor {
+                            driver: Driver::new("lego-sensor", name),
+                        })
+                        .collect(),
+                )
             }
         }
         impl ColorSensor {
@@ -1888,11 +1883,17 @@ pub mod sensors {
                 self.set_mode(MODE_COL_CAL)
             }
             /// Red component of the detected color, in the range 0-1020.
-            pub fn get_red(&self) -> Ev3Result<i32> { self.get_value0() }
+            pub fn get_red(&self) -> Ev3Result<i32> {
+                self.get_value0()
+            }
             /// Green component of the detected color, in the range 0-1020.
-            pub fn get_green(&self) -> Ev3Result<i32> { self.get_value1() }
+            pub fn get_green(&self) -> Ev3Result<i32> {
+                self.get_value1()
+            }
             /// Blue component of the detected color, in the range 0-1020.
-            pub fn get_blue(&self) -> Ev3Result<i32> { self.get_value2() }
+            pub fn get_blue(&self) -> Ev3Result<i32> {
+                self.get_value2()
+            }
             /// Red, green and blue componets of the detected color, each in the range 0-1020
             pub fn get_rgb(&self) -> Ev3Result<(i32, i32, i32)> {
                 let red = self.get_red()?;
@@ -1927,15 +1928,13 @@ pub mod sensors {
         #[automatically_derived]
         #[allow(unused_qualifications)]
         impl ::core::fmt::Debug for GyroSensor {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter)
-             -> ::core::fmt::Result {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match *self {
-                    GyroSensor { driver: ref __self_0_0 } => {
-                        let mut debug_trait_builder =
-                            f.debug_struct("GyroSensor");
-                        let _ =
-                            debug_trait_builder.field("driver",
-                                                      &&(*__self_0_0));
+                    GyroSensor {
+                        driver: ref __self_0_0,
+                    } => {
+                        let mut debug_trait_builder = f.debug_struct("GyroSensor");
+                        let _ = debug_trait_builder.field("driver", &&(*__self_0_0));
                         debug_trait_builder.finish()
                     }
                 }
@@ -1947,9 +1946,11 @@ pub mod sensors {
             #[inline]
             fn clone(&self) -> GyroSensor {
                 match *self {
-                    GyroSensor { driver: ref __self_0_0 } =>
-                    GyroSensor{driver:
-                                   ::core::clone::Clone::clone(&(*__self_0_0)),},
+                    GyroSensor {
+                        driver: ref __self_0_0,
+                    } => GyroSensor {
+                        driver: ::core::clone::Clone::clone(&(*__self_0_0)),
+                    },
                 }
             }
         }
@@ -1958,26 +1959,30 @@ pub mod sensors {
                 self.driver.get_attribute(name)
             }
         }
-        impl Sensor for GyroSensor { }
+        impl Sensor for GyroSensor {}
         impl Findable<crate::sensors::SensorPort> for GyroSensor {
             fn get(port: crate::sensors::SensorPort) -> Ev3Result<Self> {
                 let name =
-                    Driver::find_name_by_port_and_driver("lego-sensor", &port,
-                                                         "lego-ev3-gyro")?;
-                Ok(GyroSensor{driver: Driver::new("lego-sensor", &name),})
+                    Driver::find_name_by_port_and_driver("lego-sensor", &port, "lego-ev3-gyro")?;
+                Ok(GyroSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn find() -> Ev3Result<Self> {
-                let name =
-                    Driver::find_name_by_driver("lego-sensor",
-                                                "lego-ev3-gyro")?;
-                Ok(GyroSensor{driver: Driver::new("lego-sensor", &name),})
+                let name = Driver::find_name_by_driver("lego-sensor", "lego-ev3-gyro")?;
+                Ok(GyroSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn list() -> Ev3Result<Vec<Self>> {
-                Ok(Driver::find_names_by_driver("lego-sensor",
-                                                "lego-ev3-gyro")?.iter().map(|name|
-                                                                                 GyroSensor{driver:
-                                                                                                Driver::new("lego-sensor",
-                                                                                                            name),}).collect())
+                Ok(
+                    Driver::find_names_by_driver("lego-sensor", "lego-ev3-gyro")?
+                        .iter()
+                        .map(|name| GyroSensor {
+                            driver: Driver::new("lego-sensor", name),
+                        })
+                        .collect(),
+                )
             }
         }
         impl GyroSensor {
@@ -2030,15 +2035,13 @@ pub mod sensors {
         #[automatically_derived]
         #[allow(unused_qualifications)]
         impl ::core::fmt::Debug for InfraredSensor {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter)
-             -> ::core::fmt::Result {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match *self {
-                    InfraredSensor { driver: ref __self_0_0 } => {
-                        let mut debug_trait_builder =
-                            f.debug_struct("InfraredSensor");
-                        let _ =
-                            debug_trait_builder.field("driver",
-                                                      &&(*__self_0_0));
+                    InfraredSensor {
+                        driver: ref __self_0_0,
+                    } => {
+                        let mut debug_trait_builder = f.debug_struct("InfraredSensor");
+                        let _ = debug_trait_builder.field("driver", &&(*__self_0_0));
                         debug_trait_builder.finish()
                     }
                 }
@@ -2050,9 +2053,11 @@ pub mod sensors {
             #[inline]
             fn clone(&self) -> InfraredSensor {
                 match *self {
-                    InfraredSensor { driver: ref __self_0_0 } =>
-                    InfraredSensor{driver:
-                                       ::core::clone::Clone::clone(&(*__self_0_0)),},
+                    InfraredSensor {
+                        driver: ref __self_0_0,
+                    } => InfraredSensor {
+                        driver: ::core::clone::Clone::clone(&(*__self_0_0)),
+                    },
                 }
             }
         }
@@ -2064,25 +2069,27 @@ pub mod sensors {
         impl Findable<crate::sensors::SensorPort> for InfraredSensor {
             fn get(port: crate::sensors::SensorPort) -> Ev3Result<Self> {
                 let name =
-                    Driver::find_name_by_port_and_driver("lego-sensor", &port,
-                                                         "lego-ev3-ir")?;
-                Ok(InfraredSensor{driver: Driver::new("lego-sensor", &name),})
+                    Driver::find_name_by_port_and_driver("lego-sensor", &port, "lego-ev3-ir")?;
+                Ok(InfraredSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn find() -> Ev3Result<Self> {
-                let name =
-                    Driver::find_name_by_driver("lego-sensor",
-                                                "lego-ev3-ir")?;
-                Ok(InfraredSensor{driver: Driver::new("lego-sensor", &name),})
+                let name = Driver::find_name_by_driver("lego-sensor", "lego-ev3-ir")?;
+                Ok(InfraredSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn list() -> Ev3Result<Vec<Self>> {
-                Ok(Driver::find_names_by_driver("lego-sensor",
-                                                "lego-ev3-ir")?.iter().map(|name|
-                                                                               InfraredSensor{driver:
-                                                                                                  Driver::new("lego-sensor",
-                                                                                                              name),}).collect())
+                Ok(Driver::find_names_by_driver("lego-sensor", "lego-ev3-ir")?
+                    .iter()
+                    .map(|name| InfraredSensor {
+                        driver: Driver::new("lego-sensor", name),
+                    })
+                    .collect())
             }
         }
-        impl Sensor for InfraredSensor { }
+        impl Sensor for InfraredSensor {}
         impl InfraredSensor {
             /// Proximity
             pub fn set_mode_ir_prox(&self) -> Ev3Result<()> {
@@ -2127,15 +2134,13 @@ pub mod sensors {
         #[automatically_derived]
         #[allow(unused_qualifications)]
         impl ::core::fmt::Debug for TouchSensor {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter)
-             -> ::core::fmt::Result {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match *self {
-                    TouchSensor { driver: ref __self_0_0 } => {
-                        let mut debug_trait_builder =
-                            f.debug_struct("TouchSensor");
-                        let _ =
-                            debug_trait_builder.field("driver",
-                                                      &&(*__self_0_0));
+                    TouchSensor {
+                        driver: ref __self_0_0,
+                    } => {
+                        let mut debug_trait_builder = f.debug_struct("TouchSensor");
+                        let _ = debug_trait_builder.field("driver", &&(*__self_0_0));
                         debug_trait_builder.finish()
                     }
                 }
@@ -2147,9 +2152,11 @@ pub mod sensors {
             #[inline]
             fn clone(&self) -> TouchSensor {
                 match *self {
-                    TouchSensor { driver: ref __self_0_0 } =>
-                    TouchSensor{driver:
-                                    ::core::clone::Clone::clone(&(*__self_0_0)),},
+                    TouchSensor {
+                        driver: ref __self_0_0,
+                    } => TouchSensor {
+                        driver: ::core::clone::Clone::clone(&(*__self_0_0)),
+                    },
                 }
             }
         }
@@ -2158,26 +2165,30 @@ pub mod sensors {
                 self.driver.get_attribute(name)
             }
         }
-        impl Sensor for TouchSensor { }
+        impl Sensor for TouchSensor {}
         impl Findable<crate::sensors::SensorPort> for TouchSensor {
             fn get(port: crate::sensors::SensorPort) -> Ev3Result<Self> {
                 let name =
-                    Driver::find_name_by_port_and_driver("lego-sensor", &port,
-                                                         "lego-ev3-touch")?;
-                Ok(TouchSensor{driver: Driver::new("lego-sensor", &name),})
+                    Driver::find_name_by_port_and_driver("lego-sensor", &port, "lego-ev3-touch")?;
+                Ok(TouchSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn find() -> Ev3Result<Self> {
-                let name =
-                    Driver::find_name_by_driver("lego-sensor",
-                                                "lego-ev3-touch")?;
-                Ok(TouchSensor{driver: Driver::new("lego-sensor", &name),})
+                let name = Driver::find_name_by_driver("lego-sensor", "lego-ev3-touch")?;
+                Ok(TouchSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn list() -> Ev3Result<Vec<Self>> {
-                Ok(Driver::find_names_by_driver("lego-sensor",
-                                                "lego-ev3-touch")?.iter().map(|name|
-                                                                                  TouchSensor{driver:
-                                                                                                  Driver::new("lego-sensor",
-                                                                                                              name),}).collect())
+                Ok(
+                    Driver::find_names_by_driver("lego-sensor", "lego-ev3-touch")?
+                        .iter()
+                        .map(|name| TouchSensor {
+                            driver: Driver::new("lego-sensor", name),
+                        })
+                        .collect(),
+                )
             }
         }
         impl TouchSensor {
@@ -2222,15 +2233,13 @@ pub mod sensors {
         #[automatically_derived]
         #[allow(unused_qualifications)]
         impl ::core::fmt::Debug for UltrasonicSensor {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter)
-             -> ::core::fmt::Result {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match *self {
-                    UltrasonicSensor { driver: ref __self_0_0 } => {
-                        let mut debug_trait_builder =
-                            f.debug_struct("UltrasonicSensor");
-                        let _ =
-                            debug_trait_builder.field("driver",
-                                                      &&(*__self_0_0));
+                    UltrasonicSensor {
+                        driver: ref __self_0_0,
+                    } => {
+                        let mut debug_trait_builder = f.debug_struct("UltrasonicSensor");
+                        let _ = debug_trait_builder.field("driver", &&(*__self_0_0));
                         debug_trait_builder.finish()
                     }
                 }
@@ -2242,9 +2251,11 @@ pub mod sensors {
             #[inline]
             fn clone(&self) -> UltrasonicSensor {
                 match *self {
-                    UltrasonicSensor { driver: ref __self_0_0 } =>
-                    UltrasonicSensor{driver:
-                                         ::core::clone::Clone::clone(&(*__self_0_0)),},
+                    UltrasonicSensor {
+                        driver: ref __self_0_0,
+                    } => UltrasonicSensor {
+                        driver: ::core::clone::Clone::clone(&(*__self_0_0)),
+                    },
                 }
             }
         }
@@ -2253,28 +2264,28 @@ pub mod sensors {
                 self.driver.get_attribute(name)
             }
         }
-        impl Sensor for UltrasonicSensor { }
+        impl Sensor for UltrasonicSensor {}
         impl Findable<crate::sensors::SensorPort> for UltrasonicSensor {
             fn get(port: crate::sensors::SensorPort) -> Ev3Result<Self> {
                 let name =
-                    Driver::find_name_by_port_and_driver("lego-sensor", &port,
-                                                         "lego-ev3-us")?;
-                Ok(UltrasonicSensor{driver:
-                                        Driver::new("lego-sensor", &name),})
+                    Driver::find_name_by_port_and_driver("lego-sensor", &port, "lego-ev3-us")?;
+                Ok(UltrasonicSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn find() -> Ev3Result<Self> {
-                let name =
-                    Driver::find_name_by_driver("lego-sensor",
-                                                "lego-ev3-us")?;
-                Ok(UltrasonicSensor{driver:
-                                        Driver::new("lego-sensor", &name),})
+                let name = Driver::find_name_by_driver("lego-sensor", "lego-ev3-us")?;
+                Ok(UltrasonicSensor {
+                    driver: Driver::new("lego-sensor", &name),
+                })
             }
             fn list() -> Ev3Result<Vec<Self>> {
-                Ok(Driver::find_names_by_driver("lego-sensor",
-                                                "lego-ev3-us")?.iter().map(|name|
-                                                                               UltrasonicSensor{driver:
-                                                                                                    Driver::new("lego-sensor",
-                                                                                                                name),}).collect())
+                Ok(Driver::find_names_by_driver("lego-sensor", "lego-ev3-us")?
+                    .iter()
+                    .map(|name| UltrasonicSensor {
+                        driver: Driver::new("lego-sensor", name),
+                    })
+                    .collect())
             }
         }
         impl UltrasonicSensor {
@@ -2307,7 +2318,9 @@ pub mod sensors {
                 self.set_mode(MODE_US_DC_IN)
             }
             /// Measurement of the distance detected by the sensor
-            pub fn get_distance(&self) -> Ev3Result<i32> { self.get_value0() }
+            pub fn get_distance(&self) -> Ev3Result<i32> {
+                self.get_value0()
+            }
         }
     }
     pub use self::ultrasonic_sensor::UltrasonicSensor;
@@ -2407,7 +2420,6 @@ pub mod sensors {
     }
     /// EV3 ports `in1` to `in4`
     pub enum SensorPort {
-
         /// EV3 `in1` port
         In1,
 
@@ -2446,12 +2458,16 @@ pub mod sensors {
     }
     #[automatically_derived]
     #[allow(unused_qualifications)]
-    impl ::core::marker::Copy for SensorPort { }
+    impl ::core::marker::Copy for SensorPort {}
     #[automatically_derived]
     #[allow(unused_qualifications)]
     impl ::core::clone::Clone for SensorPort {
         #[inline]
-        fn clone(&self) -> SensorPort { { *self } }
+        fn clone(&self) -> SensorPort {
+            {
+                *self
+            }
+        }
     }
     impl Port for SensorPort {
         fn address(&self) -> String {
@@ -2466,8 +2482,8 @@ pub mod sensors {
 }
 pub mod led {
     //! The leds on top of the EV3 brick.
-    use std::fs;
     use crate::{utils::OrErr, Attribute, Ev3Result};
+    use std::fs;
     /// Color type.
     pub type Color = (u8, u8);
     /// Led off.
@@ -2495,23 +2511,16 @@ pub mod led {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
             match *self {
                 Led {
-                left_red: ref __self_0_0,
-                left_green: ref __self_0_1,
-                right_red: ref __self_0_2,
-                right_green: ref __self_0_3 } => {
+                    left_red: ref __self_0_0,
+                    left_green: ref __self_0_1,
+                    right_red: ref __self_0_2,
+                    right_green: ref __self_0_3,
+                } => {
                     let mut debug_trait_builder = f.debug_struct("Led");
-                    let _ =
-                        debug_trait_builder.field("left_red",
-                                                  &&(*__self_0_0));
-                    let _ =
-                        debug_trait_builder.field("left_green",
-                                                  &&(*__self_0_1));
-                    let _ =
-                        debug_trait_builder.field("right_red",
-                                                  &&(*__self_0_2));
-                    let _ =
-                        debug_trait_builder.field("right_green",
-                                                  &&(*__self_0_3));
+                    let _ = debug_trait_builder.field("left_red", &&(*__self_0_0));
+                    let _ = debug_trait_builder.field("left_green", &&(*__self_0_1));
+                    let _ = debug_trait_builder.field("right_red", &&(*__self_0_2));
+                    let _ = debug_trait_builder.field("right_green", &&(*__self_0_3));
                     debug_trait_builder.finish()
                 }
             }
@@ -2524,15 +2533,16 @@ pub mod led {
         fn clone(&self) -> Led {
             match *self {
                 Led {
-                left_red: ref __self_0_0,
-                left_green: ref __self_0_1,
-                right_red: ref __self_0_2,
-                right_green: ref __self_0_3 } =>
-                Led{left_red: ::core::clone::Clone::clone(&(*__self_0_0)),
+                    left_red: ref __self_0_0,
+                    left_green: ref __self_0_1,
+                    right_red: ref __self_0_2,
+                    right_green: ref __self_0_3,
+                } => Led {
+                    left_red: ::core::clone::Clone::clone(&(*__self_0_0)),
                     left_green: ::core::clone::Clone::clone(&(*__self_0_1)),
                     right_red: ::core::clone::Clone::clone(&(*__self_0_2)),
-                    right_green:
-                        ::core::clone::Clone::clone(&(*__self_0_3)),},
+                    right_green: ::core::clone::Clone::clone(&(*__self_0_3)),
+                },
             }
         }
     }
@@ -2547,16 +2557,14 @@ pub mod led {
             for path in paths {
                 let file_name = path?.file_name();
                 let name = file_name.to_str().or_err()?.to_owned();
-                if name.contains(":brick-status") || name.contains(":ev3dev")
-                   {
+                if name.contains(":brick-status") || name.contains(":ev3dev") {
                     if name.contains("led0:") || name.contains("left:") {
                         if name.contains("red:") {
                             left_red_name = name;
                         } else if name.contains("green:") {
                             left_green_name = name
                         }
-                    } else if name.contains("led1:") ||
-                                  name.contains("right:") {
+                    } else if name.contains("led1:") || name.contains("right:") {
                         if name.contains("red:") {
                             right_red_name = name
                         } else if name.contains("green:") {
@@ -2565,39 +2573,45 @@ pub mod led {
                     }
                 }
             }
-            let left_red =
-                Attribute::new("leds", left_red_name.as_str(), "brightness")?;
-            let left_green =
-                Attribute::new("leds", left_green_name.as_str(),
-                               "brightness")?;
-            let right_red =
-                Attribute::new("leds", right_red_name.as_str(),
-                               "brightness")?;
-            let right_green =
-                Attribute::new("leds", right_green_name.as_str(),
-                               "brightness")?;
-            Ok(Led{left_red, left_green, right_red, right_green,})
+            let left_red = Attribute::new("leds", left_red_name.as_str(), "brightness")?;
+            let left_green = Attribute::new("leds", left_green_name.as_str(), "brightness")?;
+            let right_red = Attribute::new("leds", right_red_name.as_str(), "brightness")?;
+            let right_green = Attribute::new("leds", right_green_name.as_str(), "brightness")?;
+            Ok(Led {
+                left_red,
+                left_green,
+                right_red,
+                right_green,
+            })
         }
         /// Returns the current red value of the left led.
-        fn get_left_red(&self) -> Ev3Result<u8> { self.left_red.get() }
+        fn get_left_red(&self) -> Ev3Result<u8> {
+            self.left_red.get()
+        }
         /// Sets the red value of the left led.
         fn set_left_red(&self, brightness: u8) -> Ev3Result<()> {
             self.left_red.set(brightness)
         }
         /// Returns the current green value of the left led.
-        fn get_left_green(&self) -> Ev3Result<u8> { self.left_green.get() }
+        fn get_left_green(&self) -> Ev3Result<u8> {
+            self.left_green.get()
+        }
         /// Sets the green value of the left led.
         fn set_left_green(&self, brightness: u8) -> Ev3Result<()> {
             self.left_green.set(brightness)
         }
         /// Returns the current red value of the right led.
-        fn get_right_red(&self) -> Ev3Result<u8> { self.right_red.get() }
+        fn get_right_red(&self) -> Ev3Result<u8> {
+            self.right_red.get()
+        }
         /// Sets the red value of the right led.
         fn set_right_red(&self, brightness: u8) -> Ev3Result<()> {
             self.right_red.set(brightness)
         }
         /// Returns the current green value of the right led.
-        fn get_right_green(&self) -> Ev3Result<u8> { self.right_green.get() }
+        fn get_right_green(&self) -> Ev3Result<u8> {
+            self.right_green.get()
+        }
         /// Sets the green value of the right led.
         fn set_right_green(&self, brightness: u8) -> Ev3Result<()> {
             self.right_green.set(brightness)
@@ -2630,7 +2644,9 @@ pub mod led {
             let right = self.get_right_color()?;
             if left.0 == right.0 && left.1 == right.1 {
                 Ok(Some(left))
-            } else { Ok(None) }
+            } else {
+                Ok(None)
+            }
         }
         /// Sets the color value of both leds.
         pub fn set_color(&self, color: Color) -> Ev3Result<()> {
@@ -2679,7 +2695,9 @@ pub mod sound {
     /// # }
     /// ```
     pub fn beep() -> Ev3Result<Child> {
-        Ok(Command::new("/usr/bin/beep").stdout(Stdio::null()).spawn()?)
+        Ok(Command::new("/usr/bin/beep")
+            .stdout(Stdio::null())
+            .spawn()?)
     }
     /// Call beep command with the provided arguments.
     ///
@@ -2697,9 +2715,15 @@ pub mod sound {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn beep_args<I, S>(args: I) -> Ev3Result<Child> where
-     I: IntoIterator<Item = S>, S: AsRef<OsStr> {
-        Ok(Command::new("/usr/bin/beep").args(args).stdout(Stdio::null()).spawn()?)
+    pub fn beep_args<I, S>(args: I) -> Ev3Result<Child>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        Ok(Command::new("/usr/bin/beep")
+            .args(args)
+            .stdout(Stdio::null())
+            .spawn()?)
     }
     /// Play tone sequence. The tone_sequence parameter is a list of tuples,
     /// where each tuple contains up to three numbers. The first number is
@@ -2717,31 +2741,32 @@ pub mod sound {
     /// # Ok(())
     /// # }
     pub fn tone(frequency: f32, duration: i32) -> Ev3Result<Child> {
-        beep_args(<[_]>::into_vec(box
-                                      [{
-                                           let res =
-                                               ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["-f "],
-                                                                                                   &match (&frequency,)
-                                                                                                        {
-                                                                                                        (arg0,)
-                                                                                                        =>
-                                                                                                        [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                      ::core::fmt::Display::fmt)],
-                                                                                                    }));
-                                           res
-                                       },
-                                       {
-                                           let res =
-                                               ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["-l "],
-                                                                                                   &match (&duration,)
-                                                                                                        {
-                                                                                                        (arg0,)
-                                                                                                        =>
-                                                                                                        [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                      ::core::fmt::Display::fmt)],
-                                                                                                    }));
-                                           res
-                                       }]))
+        beep_args(<[_]>::into_vec(box [
+            {
+                let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                    &["-f "],
+                    &match (&frequency,) {
+                        (arg0,) => [::core::fmt::ArgumentV1::new(
+                            arg0,
+                            ::core::fmt::Display::fmt,
+                        )],
+                    },
+                ));
+                res
+            },
+            {
+                let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                    &["-l "],
+                    &match (&duration,) {
+                        (arg0,) => [::core::fmt::ArgumentV1::new(
+                            arg0,
+                            ::core::fmt::Display::fmt,
+                        )],
+                    },
+                ));
+                res
+            },
+        ]))
     }
     /// Play tone sequence. The tone_sequence parameter is a list of tuples,
     /// where each tuple contains up to three numbers. The first number is
@@ -2780,99 +2805,116 @@ pub mod sound {
     /// # Ok(())
     /// # }
     pub fn tone_sequence(sequence: &[(f32, i32, i32)]) -> Ev3Result<Child> {
-        let tones: Vec<String> =
-            sequence.iter().map(|(frequency, duration, delay)|
-                                    {
-                                        <[_]>::into_vec(box
-                                                            [{
-                                                                 let res =
-                                                                     ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["-f "],
-                                                                                                                         &match (&frequency,)
-                                                                                                                              {
-                                                                                                                              (arg0,)
-                                                                                                                              =>
-                                                                                                                              [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                                            ::core::fmt::Display::fmt)],
-                                                                                                                          }));
-                                                                 res
-                                                             },
-                                                             {
-                                                                 let res =
-                                                                     ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["-l "],
-                                                                                                                         &match (&duration,)
-                                                                                                                              {
-                                                                                                                              (arg0,)
-                                                                                                                              =>
-                                                                                                                              [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                                            ::core::fmt::Display::fmt)],
-                                                                                                                          }));
-                                                                 res
-                                                             },
-                                                             {
-                                                                 let res =
-                                                                     ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["-D "],
-                                                                                                                         &match (&delay,)
-                                                                                                                              {
-                                                                                                                              (arg0,)
-                                                                                                                              =>
-                                                                                                                              [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                                            ::core::fmt::Display::fmt)],
-                                                                                                                          }));
-                                                                 res
-                                                             }])
-                                    }).collect::<Vec<Vec<String>>>().join(&["-n".to_owned()][..]);
+        let tones: Vec<String> = sequence
+            .iter()
+            .map(|(frequency, duration, delay)| {
+                <[_]>::into_vec(box [
+                    {
+                        let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                            &["-f "],
+                            &match (&frequency,) {
+                                (arg0,) => [::core::fmt::ArgumentV1::new(
+                                    arg0,
+                                    ::core::fmt::Display::fmt,
+                                )],
+                            },
+                        ));
+                        res
+                    },
+                    {
+                        let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                            &["-l "],
+                            &match (&duration,) {
+                                (arg0,) => [::core::fmt::ArgumentV1::new(
+                                    arg0,
+                                    ::core::fmt::Display::fmt,
+                                )],
+                            },
+                        ));
+                        res
+                    },
+                    {
+                        let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                            &["-D "],
+                            &match (&delay,) {
+                                (arg0,) => [::core::fmt::ArgumentV1::new(
+                                    arg0,
+                                    ::core::fmt::Display::fmt,
+                                )],
+                            },
+                        ));
+                        res
+                    },
+                ])
+            })
+            .collect::<Vec<Vec<String>>>()
+            .join(&["-n".to_owned()][..]);
         beep_args(tones)
     }
     /// Play wav file
     pub fn play(wav_file: &str) -> Ev3Result<Child> {
-        Ok(Command::new("/usr/bin/aplay").arg("-q").arg(wav_file).stdout(Stdio::null()).spawn()?)
+        Ok(Command::new("/usr/bin/aplay")
+            .arg("-q")
+            .arg(wav_file)
+            .stdout(Stdio::null())
+            .spawn()?)
     }
     /// Speak the given text aloud.
     pub fn speak(text: &str) -> Ev3Result<Child> {
-        let espeak =
-            Command::new("/usr/bin/espeak").args(&["--stdout", "-a", "200",
-                                                   "-s", "130",
-                                                   text]).stdout(Stdio::piped()).spawn()?;
-        Ok(Command::new("/usr/bin/aplay").arg("-q").stdin(espeak.stdout.ok_or(Ev3Error::NotFound)?).stdout(Stdio::null()).spawn()?)
+        let espeak = Command::new("/usr/bin/espeak")
+            .args(&["--stdout", "-a", "200", "-s", "130", text])
+            .stdout(Stdio::piped())
+            .spawn()?;
+        Ok(Command::new("/usr/bin/aplay")
+            .arg("-q")
+            .stdin(espeak.stdout.ok_or(Ev3Error::NotFound)?)
+            .stdout(Stdio::null())
+            .spawn()?)
     }
     /// Get the main channel name or 'Playback' if not available.
     fn get_channels() -> Ev3Result<Vec<String>> {
-        let out =
-            String::from_utf8(Command::new("/usr/bin/amixer").arg("scontrols").output()?.stdout)?;
-        let mut channels: Vec<String> =
-            out.split('\n').filter_map(|line|
-                                           {
-                                               let vol_start =
-                                                   line.find('\'').unwrap_or(0)
-                                                       + 1;
-                                               let vol_end =
-                                                   line.rfind('\'').unwrap_or(1);
-                                               if vol_start >= vol_end {
-                                                   None
-                                               } else {
-                                                   Some(line[vol_start..vol_end].to_owned())
-                                               }
-                                           }).collect();
-        if channels.is_empty() { channels.push("Playback".to_owned()); }
+        let out = String::from_utf8(
+            Command::new("/usr/bin/amixer")
+                .arg("scontrols")
+                .output()?
+                .stdout,
+        )?;
+        let mut channels: Vec<String> = out
+            .split('\n')
+            .filter_map(|line| {
+                let vol_start = line.find('\'').unwrap_or(0) + 1;
+                let vol_end = line.rfind('\'').unwrap_or(1);
+                if vol_start >= vol_end {
+                    None
+                } else {
+                    Some(line[vol_start..vol_end].to_owned())
+                }
+            })
+            .collect();
+        if channels.is_empty() {
+            channels.push("Playback".to_owned());
+        }
         Ok(channels)
     }
     /// Sets the sound volume to the given percentage [0-100] by calling
     /// `amixer -q set <channel> <pct>%`.
     pub fn set_volume_channel(volume: i32, channel: &str) -> Ev3Result<()> {
-        Command::new("/usr/bin/amixer").args(&["-q", "set", &channel,
-                                               &{
-                                                    let res =
-                                                        ::alloc::fmt::format(::core::fmt::Arguments::new_v1(&["",
-                                                                                                              "%"],
-                                                                                                            &match (&volume,)
-                                                                                                                 {
-                                                                                                                 (arg0,)
-                                                                                                                 =>
-                                                                                                                 [::core::fmt::ArgumentV1::new(arg0,
-                                                                                                                                               ::core::fmt::Display::fmt)],
-                                                                                                             }));
-                                                    res
-                                                }]).stdout(Stdio::null()).spawn()?.wait()?;
+        Command::new("/usr/bin/amixer")
+            .args(&["-q", "set", &channel, &{
+                let res = ::alloc::fmt::format(::core::fmt::Arguments::new_v1(
+                    &["", "%"],
+                    &match (&volume,) {
+                        (arg0,) => [::core::fmt::ArgumentV1::new(
+                            arg0,
+                            ::core::fmt::Display::fmt,
+                        )],
+                    },
+                ));
+                res
+            }])
+            .stdout(Stdio::null())
+            .spawn()?
+            .wait()?;
         Ok(())
     }
     /// Sets the sound volume to the given percentage [0-100] by calling
@@ -2889,9 +2931,12 @@ pub mod sound {
     /// Gets the current sound volume by parsing the output of
     /// `amixer get <channel>`.
     pub fn get_volume_channel(channel: &str) -> Ev3Result<i32> {
-        let out =
-            String::from_utf8(Command::new("/usr/bin/amixer").args(&["get",
-                                                                     channel]).output()?.stdout)?;
+        let out = String::from_utf8(
+            Command::new("/usr/bin/amixer")
+                .args(&["get", channel])
+                .output()?
+                .stdout,
+        )?;
         let vol_start = out.find('[').unwrap_or(0) + 1;
         let vol_end = out.find("%]").unwrap_or(1);
         let vol = &out[vol_start..vol_end].parse::<i32>()?;
@@ -2927,6 +2972,7 @@ mod buttons {
     //! }
     //! # }
     //! ```
+    use crate::Ev3Result;
     use std::cell::RefCell;
     use std::collections::HashMap;
     use std::collections::HashSet;
@@ -2934,7 +2980,6 @@ mod buttons {
     use std::fs::File;
     use std::os::unix::io::AsRawFd;
     use std::rc::Rc;
-    use crate::Ev3Result;
     const KEY_BUF_LEN: usize = 96;
     const EVIOCGKEY: u32 = 2_153_792_792;
     /// Helper struct for ButtonFileHandler.
@@ -2944,7 +2989,9 @@ mod buttons {
     }
     impl fmt::Debug for FileMapEntry {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.debug_struct("FileMapEntry").field("file", &self.file).finish()
+            f.debug_struct("FileMapEntry")
+                .field("file", &self.file)
+                .finish()
         }
     }
     /// Helper struct for ButtonFileHandler.
@@ -2958,15 +3005,12 @@ mod buttons {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
             match *self {
                 ButtonMapEntry {
-                file_name: ref __self_0_0, key_code: ref __self_0_1 } => {
-                    let mut debug_trait_builder =
-                        f.debug_struct("ButtonMapEntry");
-                    let _ =
-                        debug_trait_builder.field("file_name",
-                                                  &&(*__self_0_0));
-                    let _ =
-                        debug_trait_builder.field("key_code",
-                                                  &&(*__self_0_1));
+                    file_name: ref __self_0_0,
+                    key_code: ref __self_0_1,
+                } => {
+                    let mut debug_trait_builder = f.debug_struct("ButtonMapEntry");
+                    let _ = debug_trait_builder.field("file_name", &&(*__self_0_0));
+                    let _ = debug_trait_builder.field("key_code", &&(*__self_0_1));
                     debug_trait_builder.finish()
                 }
             }
@@ -2986,20 +3030,14 @@ mod buttons {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
             match *self {
                 ButtonFileHandler {
-                file_map: ref __self_0_0,
-                button_map: ref __self_0_1,
-                pressed_buttons: ref __self_0_2 } => {
-                    let mut debug_trait_builder =
-                        f.debug_struct("ButtonFileHandler");
-                    let _ =
-                        debug_trait_builder.field("file_map",
-                                                  &&(*__self_0_0));
-                    let _ =
-                        debug_trait_builder.field("button_map",
-                                                  &&(*__self_0_1));
-                    let _ =
-                        debug_trait_builder.field("pressed_buttons",
-                                                  &&(*__self_0_2));
+                    file_map: ref __self_0_0,
+                    button_map: ref __self_0_1,
+                    pressed_buttons: ref __self_0_2,
+                } => {
+                    let mut debug_trait_builder = f.debug_struct("ButtonFileHandler");
+                    let _ = debug_trait_builder.field("file_map", &&(*__self_0_0));
+                    let _ = debug_trait_builder.field("button_map", &&(*__self_0_1));
+                    let _ = debug_trait_builder.field("pressed_buttons", &&(*__self_0_2));
                     debug_trait_builder.finish()
                 }
             }
@@ -3008,23 +3046,27 @@ mod buttons {
     impl ButtonFileHandler {
         /// Create a new instance.
         fn new() -> Self {
-            ButtonFileHandler{file_map: HashMap::new(),
-                              button_map: HashMap::new(),
-                              pressed_buttons: HashSet::new(),}
+            ButtonFileHandler {
+                file_map: HashMap::new(),
+                button_map: HashMap::new(),
+                pressed_buttons: HashSet::new(),
+            }
         }
         /// Add a button the the file handler.
-        fn add_button(&mut self, name: &str, file_name: &str, key_code: u32)
-         -> Ev3Result<()> {
+        fn add_button(&mut self, name: &str, file_name: &str, key_code: u32) -> Ev3Result<()> {
             if !self.file_map.contains_key(file_name) {
                 let file = File::open(file_name)?;
                 let buffer_cache = [0u8; KEY_BUF_LEN];
-                self.file_map.insert(file_name.to_owned(),
-                                     FileMapEntry{file, buffer_cache,});
+                self.file_map
+                    .insert(file_name.to_owned(), FileMapEntry { file, buffer_cache });
             }
-            self.button_map.insert(name.to_owned(),
-                                   ButtonMapEntry{file_name:
-                                                      file_name.to_owned(),
-                                                  key_code,});
+            self.button_map.insert(
+                name.to_owned(),
+                ButtonMapEntry {
+                    file_name: file_name.to_owned(),
+                    key_code,
+                },
+            );
             Ok(())
         }
         fn get_pressed_buttons(&self) -> HashSet<String> {
@@ -3039,16 +3081,24 @@ mod buttons {
         fn process(&mut self) {
             for entry in self.file_map.values_mut() {
                 unsafe {
-                    libc::ioctl(entry.file.as_raw_fd(), EVIOCGKEY.into(),
-                                &mut entry.buffer_cache);
+                    libc::ioctl(
+                        entry.file.as_raw_fd(),
+                        EVIOCGKEY.into(),
+                        &mut entry.buffer_cache,
+                    );
                 }
             }
             self.pressed_buttons.clear();
-            for (btn_name, ButtonMapEntry { file_name, key_code }) in
-                self.button_map.iter() {
+            for (
+                btn_name,
+                ButtonMapEntry {
+                    file_name,
+                    key_code,
+                },
+            ) in self.button_map.iter()
+            {
                 let buffer = &self.file_map[file_name].buffer_cache;
-                if (buffer[(key_code / 8) as usize] & 1 << (key_code % 8)) !=
-                       0 {
+                if (buffer[(key_code / 8) as usize] & 1 << (key_code % 8)) != 0 {
                     self.pressed_buttons.insert(btn_name.to_owned());
                 }
             }
@@ -3086,11 +3136,11 @@ mod buttons {
     impl ::core::fmt::Debug for Ev3Button {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
             match *self {
-                Ev3Button { button_handler: ref __self_0_0 } => {
+                Ev3Button {
+                    button_handler: ref __self_0_0,
+                } => {
                     let mut debug_trait_builder = f.debug_struct("Ev3Button");
-                    let _ =
-                        debug_trait_builder.field("button_handler",
-                                                  &&(*__self_0_0));
+                    let _ = debug_trait_builder.field("button_handler", &&(*__self_0_0));
                     debug_trait_builder.finish()
                 }
             }
@@ -3102,9 +3152,11 @@ mod buttons {
         #[inline]
         fn clone(&self) -> Ev3Button {
             match *self {
-                Ev3Button { button_handler: ref __self_0_0 } =>
-                Ev3Button{button_handler:
-                              ::core::clone::Clone::clone(&(*__self_0_0)),},
+                Ev3Button {
+                    button_handler: ref __self_0_0,
+                } => Ev3Button {
+                    button_handler: ::core::clone::Clone::clone(&(*__self_0_0)),
+                },
             }
         }
     }
@@ -3112,29 +3164,25 @@ mod buttons {
         /// Ev3 brick button handler. Opens the corresponding `/dev/input` file handlers.
         pub fn new() -> Ev3Result<Self> {
             let mut handler = ButtonFileHandler::new();
-            handler.add_button("up",
-                               "/dev/input/by-path/platform-gpio_keys-event",
-                               103)?;
-            handler.add_button("down",
-                               "/dev/input/by-path/platform-gpio_keys-event",
-                               108)?;
-            handler.add_button("left",
-                               "/dev/input/by-path/platform-gpio_keys-event",
-                               105)?;
-            handler.add_button("right",
-                               "/dev/input/by-path/platform-gpio_keys-event",
-                               106)?;
-            handler.add_button("enter",
-                               "/dev/input/by-path/platform-gpio_keys-event",
-                               28)?;
-            handler.add_button("backspace",
-                               "/dev/input/by-path/platform-gpio_keys-event",
-                               14)?;
-            Ok(Self{button_handler: Rc::new(RefCell::new(handler)),})
+            handler.add_button("up", "/dev/input/by-path/platform-gpio_keys-event", 103)?;
+            handler.add_button("down", "/dev/input/by-path/platform-gpio_keys-event", 108)?;
+            handler.add_button("left", "/dev/input/by-path/platform-gpio_keys-event", 105)?;
+            handler.add_button("right", "/dev/input/by-path/platform-gpio_keys-event", 106)?;
+            handler.add_button("enter", "/dev/input/by-path/platform-gpio_keys-event", 28)?;
+            handler.add_button(
+                "backspace",
+                "/dev/input/by-path/platform-gpio_keys-event",
+                14,
+            )?;
+            Ok(Self {
+                button_handler: Rc::new(RefCell::new(handler)),
+            })
         }
         /// Check for currenly pressed buttons. If the new state differs from the
         /// old state, call the appropriate button event handlers.
-        pub fn process(&self) { self.button_handler.borrow_mut().process() }
+        pub fn process(&self) {
+            self.button_handler.borrow_mut().process()
+        }
         /// Get all pressed buttons by name.
         pub fn get_pressed_buttons(&self) -> HashSet<String> {
             self.button_handler.borrow().get_pressed_buttons()
@@ -3169,8 +3217,8 @@ pub use buttons::Ev3Button;
 mod power_supply {
     //! An interface to read data from the system’s power_supply class.
     //! Uses the built-in legoev3-battery if none is specified.
-    use std::fs;
     use crate::{utils::OrErr, Attribute, Device, Driver, Ev3Error, Ev3Result};
+    use std::fs;
     /// An interface to read data from the system’s power_supply class.
     /// Uses the built-in legoev3-battery if none is specified.
     pub struct PowerSupply {
@@ -3181,11 +3229,11 @@ mod power_supply {
     impl ::core::fmt::Debug for PowerSupply {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
             match *self {
-                PowerSupply { driver: ref __self_0_0 } => {
-                    let mut debug_trait_builder =
-                        f.debug_struct("PowerSupply");
-                    let _ =
-                        debug_trait_builder.field("driver", &&(*__self_0_0));
+                PowerSupply {
+                    driver: ref __self_0_0,
+                } => {
+                    let mut debug_trait_builder = f.debug_struct("PowerSupply");
+                    let _ = debug_trait_builder.field("driver", &&(*__self_0_0));
                     debug_trait_builder.finish()
                 }
             }
@@ -3197,9 +3245,11 @@ mod power_supply {
         #[inline]
         fn clone(&self) -> PowerSupply {
             match *self {
-                PowerSupply { driver: ref __self_0_0 } =>
-                PowerSupply{driver:
-                                ::core::clone::Clone::clone(&(*__self_0_0)),},
+                PowerSupply {
+                    driver: ref __self_0_0,
+                } => PowerSupply {
+                    driver: ::core::clone::Clone::clone(&(*__self_0_0)),
+                },
             }
         }
     }
@@ -3216,9 +3266,9 @@ mod power_supply {
                 let file_name = path?.file_name();
                 let name = file_name.to_str().or_err()?;
                 if name.contains("ev3-battery") {
-                    return Ok(PowerSupply{driver:
-                                              Driver::new("power_supply",
-                                                          name),});
+                    return Ok(PowerSupply {
+                        driver: Driver::new("power_supply", name),
+                    });
                 }
             }
             Err(Ev3Error::NotFound)
